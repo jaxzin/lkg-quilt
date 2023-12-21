@@ -1,4 +1,4 @@
-name: Python Package
+name: Testing
 
 on:
   push:
@@ -100,6 +100,7 @@ jobs:
           twine upload dist/*
 
       - uses: stefanzweifel/git-auto-commit-action@v5
-        commit_message: Bumping patch number for prerelease version.
-        file_pattern: '.bumpversion.cfg setup.py'
-        ref: ${{ github.head_ref }}
+        with:
+          commit_message: Bumping patch number for prerelease version.
+          file_pattern: '.bumpversion.cfg setup.py'
+          ref: ${{ github.head_ref }}

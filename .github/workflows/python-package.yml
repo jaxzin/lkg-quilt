@@ -1,0 +1,110 @@
+name: Python Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: myenv
+          environment-file: environment.yml
+          python-version: 3.8
+          auto-activate-base: false
+
+      - name: Conda environment creation
+        run: |
+          conda env create -f environment.yml
+          source activate lkg-quilt
+
+      - name: Lint with flake8
+        run: |
+          conda install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        run: |
+          conda install pytest
+          pytest
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+#      - name: Set up Python
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: '3.8'
+#
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: myenv
+          environment-file: environment.yml
+          python-version: 3.8
+          auto-activate-base: false
+
+      - name: Conda environment creation
+        run: |
+          conda env create -f environment.yml
+          source activate lkg-quilt
+
+      - name: Install build tool dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine readme_renderer bump2version
+
+      -  name: Bump patch version (main only)
+         if:   github.ref == 'refs/heads/main'
+         run:  bump2version patch
+
+      -  name: Setting version for PR (pull requests only)
+         if:   startsWith(github.ref, 'refs/pull/')
+         run:  |
+           PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+           bump2version --new-version
+
+      - name: Build package
+        run: python setup.py sdist bdist_wheel
+
+      - name: Check README rendering
+        run: python -m readme_renderer README.md --output README.html
+
+      - name: Check the package with twine
+        run: twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts
+          path: |
+            README.html
+            dist/
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          VERSION: ${{ env.VERSION }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        commit_message: Bumping patch number for prerelease version.
+        file_pattern: '.bumpversion.cfg setup.py'
+        ref: ${{ github.head_ref }}

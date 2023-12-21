@@ -1,4 +1,5 @@
 from setuptools import setup
+import os
 
 # Set the version number from the VERSION environment variable if it exists
 version = os.environ.get('VERSION', '0.0.1')  # Default version if not set

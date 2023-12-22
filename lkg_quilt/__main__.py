@@ -127,7 +127,7 @@ def create_quilt_filter(
     # When focusing, what the max number of pixels we need to shift the images by
     max_focus_shift = crop_width * abs(focus * 2)
     # positive focus means "shift left", negative means "shift right"
-    focus_shift_sign = focus / abs(focus)
+    focus_shift_sign = focus / abs(focus) if focus != 0.0 else 0.0
 
     # The width of pixels we need to do the focus shift
     # (the cropped image width plus the max distance in pixels we need to shift to adjust the focus)

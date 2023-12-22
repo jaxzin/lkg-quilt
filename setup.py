@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 
 # Set the version number from the VERSION environment variable if it exists
-version = os.environ.get('VERSION', '1.0.0')  # Default version if not set
+version = os.environ.get('VERSION', '1.0.1')  # Default version if not set
 
 # Read the contents of your README file
 with open('README.md', encoding='utf-8') as f:

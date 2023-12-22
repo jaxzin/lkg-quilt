@@ -126,6 +126,9 @@ def create_quilt_filter(
 
     # When focusing, what the max number of pixels we need to shift the images by
     max_focus_shift = crop_width * abs(focus * 2)
+    # positive focus means "shift left", negative means "shift right"
+    focus_shift_sign = focus / abs(focus)
+
     # The width of pixels we need to do the focus shift
     # (the cropped image width plus the max distance in pixels we need to shift to adjust the focus)
     zoompan_width = orig_width + max_focus_shift
@@ -137,8 +140,15 @@ def create_quilt_filter(
     # side for shifting outside of the original leftmost and rightmost views
     padding_factor = (zoompan_width / orig_width)
     pad_width = orig_width * padding_factor
-    focus_start_x = (pad_width - zoompan_width) / 2
-    shift_per_frame = max_focus_shift / total_views
+
+    # are we starting on the left side of the "pan"...
+    if focus_shift_sign >= 0:
+        focus_start_x = (pad_width - zoompan_width) / 2
+    else:
+        # ... or the right side of the "pan"?
+        focus_start_x = zoompan_width - orig_width - (pad_width - zoompan_width) / 2
+
+    shift_per_frame = focus_shift_sign * max_focus_shift / total_views
     #print(f'max_focus_shift:{max_focus_shift},orig_width:{orig_width},crop_width:{crop_width},zoompan_width:{zoompan_width}, pad_width:{int(orig_width * padding_factor)}, padding_factor:{padding_factor}, focus_start_x:{focus_start_x}, shift_per_frame:{shift_per_frame}')
 
     # Get the input views (this can be an imageset, a video set, or a single video (if rail is true)
